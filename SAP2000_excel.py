@@ -22,3 +22,19 @@ def leer_excel(ruta_excel):
         df_opening    = pd.read_excel(xls, sheet_name="Nodes", usecols="C:D", skiprows=36, nrows=10, header=None)
         df_eje_long   = pd.read_excel(xls, sheet_name="Nodes", usecols="C:D", skiprows=28, nrows=1, header=None)
 
+    # ── Parámetros de abertura ────────────────────────────────────────
+    df_opening = df_opening.dropna(subset=[df_opening.columns[0]])
+    opening_params = dict(zip(df_opening.iloc[:, 0], df_opening.iloc[:, 1]))
+
+    opening = str(opening_params["Opening?"]).strip()
+    side = str(opening_params["Side:"]).strip()
+    method = str(opening_params["Opening method:"]).strip()
+    Z_max_opening = float(opening_params["Height from 0 m (top):"])
+    Z_min_opening = -abs(float(opening_params["Height to 0 m (bottom):"]))
+    n_modulos_completos = int(opening_params["Number of complete rings:"])
+    ancho_extra = float(opening_params["Width in last rings:"])
+
+    print(f"Opening: {opening} | Side: {side} | Method: {method}")
+    print(f"Z_max: {Z_max_opening} | Z_min: {Z_min_opening}")
+    print(f"Módulos completos: {n_modulos_completos} | Ancho extra: {ancho_extra}m")
+
