@@ -38,3 +38,17 @@ def leer_excel(ruta_excel):
     print(f"Z_max: {Z_max_opening} | Z_min: {Z_min_opening}")
     print(f"Módulos completos: {n_modulos_completos} | Ancho extra: {ancho_extra}m")
 
+    # ── Parámetros de carga ───────────────────────────────────────────
+    df_load_params = df_load_params.dropna(subset=[df_load_params.columns[0]])
+    load_params    = dict(zip(df_load_params.iloc[:, 0], df_load_params.iloc[:, 1]))
+
+    k0            = float(load_params["k0:"])
+    gamma_terreno = float(load_params["Ground density (kN/m3):"])
+    gamma_agua    = float(load_params["Water density (kN/m3):"])
+    H_clave       = float(load_params["Ground Height at crown (m):"])
+    H_agua_clave  = float(load_params["Groundwater Height at crown (m):"])
+
+    print(f"k0={k0} | γ_t={gamma_terreno} | γ_w={gamma_agua} | H_clave={H_clave} | H_agua={H_agua_clave}")
+
+    # ── Parámetros del modelo ─────────────────────────────────────────
+    param = dict(zip(df_param.iloc[:, 2], df_param.iloc[:, 3]))
