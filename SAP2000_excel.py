@@ -52,3 +52,40 @@ def leer_excel(ruta_excel):
 
     # ── Parámetros del modelo ─────────────────────────────────────────
     param = dict(zip(df_param.iloc[:, 2], df_param.iloc[:, 3]))
+
+    # ── Modifiers ─────────────────────────────────────────────────────
+    modifiers_dict = dict(zip(df_modifiers.iloc[:, 0], df_modifiers.iloc[:, 1]))
+
+    # ── Eje longitudinal ──────────────────────────────────────────────
+    eje_long = str(df_eje_long.iloc[0, 1]).strip().upper()
+    dir_proj_H = 7 if eje_long == "Y" else 8
+    print(f"Eje longitudinal: {eje_long}")
+
+    return {
+        "eje_long":              eje_long,
+        "dir_proj_H":            dir_proj_H,
+        "opening":               opening,
+        "side":                  side,
+        "method":                method,
+        "Z_max_opening":         Z_max_opening,
+        "Z_min_opening":         Z_min_opening,
+        "n_modulos_completos":   n_modulos_completos,
+        "ancho_extra":           ancho_extra,
+        "k0":                    k0,
+        "gamma_terreno":         gamma_terreno,
+        "gamma_agua":            gamma_agua,
+        "H_clave":               H_clave,
+        "H_agua_clave":          H_agua_clave,
+        "param":                 param,
+        "modifiers_dict":        modifiers_dict,
+        "df_mat_raw":            df_mat_raw,
+        "df_area_raw":           df_area_raw,
+        "df_prop_raw":           df_prop_raw,
+        "df_asprings":           df_asprings,
+        "df_reinf_raw":          df_reinf_raw,
+        "df_reinf2_raw":         df_reinf2_raw,
+        "df_localax":            df_localax,
+        "df_nodos":              df_nodos,
+        "df_links":              df_links,
+        "df_patterns":           df_patterns,
+    }
