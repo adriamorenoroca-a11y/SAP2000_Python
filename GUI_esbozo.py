@@ -47,6 +47,91 @@ class App(ctk.CTk):
                       height=40, font=("Arial", 13, "bold")
                       ).pack(padx=10, pady=20, fill="x", side="bottom")
 
+        # Panel derecho
+        self.panel_der = ctk.CTkFrame(self)
+        self.panel_der.grid(row=0, column=1, padx=(0, 10), pady=10, sticky="nsew")
+        self.panel_der.grid_rowconfigure(0, weight=1)
+        self.panel_der.grid_columnconfigure(0, weight=1)
+
+        self._crear_frame_geometria()
+        self._crear_frame_cargas()
+
+        self.cambiar_seccion("Geometría")
+
+    def _crear_frame_geometria(self):
+        f = ctk.CTkScrollableFrame(self.panel_der)
+        self.frames_seccion["Geometría"] = f
+
+        ctk.CTkLabel(f, text="Geometría del túnel",
+                     font=("Arial", 14, "bold")).pack(padx=16, pady=(16, 8), anchor="w")
+
+        params = [
+            ("Radio (eje) (m)", "—"),
+            ("Nº nodos por anillo", "—"),
+            ("Nº módulos", "—"),
+            ("Longitud longitudinal (m)", "—"),
+            ("Áreas por anillo", "—"),
+            ("Separación módulos (m)", "—"),
+        ]
+
+        frame_grid = ctk.CTkFrame(f, fg_color="transparent")
+        frame_grid.pack(padx=16, fill="x")
+
+        for i, (label, placeholder) in enumerate(params):
+            col = i % 2
+            row = i // 2
+            frame_grid.grid_columnconfigure(col, weight=1)
+            sub = ctk.CTkFrame(frame_grid, fg_color="transparent")
+            sub.grid(row=row, column=col, padx=8, pady=4, sticky="ew")
+            ctk.CTkLabel(sub, text=label, font=("Arial", 10),
+                         text_color="gray").pack(anchor="w")
+            entry = ctk.CTkEntry(sub, height=30, placeholder_text=placeholder,
+                                 state="disabled", fg_color=("gray90", "gray20"))
+            entry.pack(fill="x")
+
+    def _crear_frame_cargas(self):
+        f = ctk.CTkScrollableFrame(self.panel_der)
+        self.frames_seccion["Cargas"] = f
+
+        ctk.CTkLabel(f, text="Parámetros de carga",
+                     font=("Arial", 14, "bold")).pack(padx=16, pady=(16, 8), anchor="w")
+
+        params_c = [
+            ("k0", "—"),
+            ("Densidad terreno (kN/m³)", "—"),
+            ("Densidad agua (kN/m³)", "—"),
+            ("Altura tierras en clave (m)", "—"),
+            ("Altura agua en clave (m)", "—"),
+        ]
+
+        frame_grid = ctk.CTkFrame(f, fg_color="transparent")
+        frame_grid.pack(padx=16, fill="x")
+
+        for i, (label, placeholder) in enumerate(params_c):
+            col = i % 2
+            row = i // 2
+            frame_grid.grid_columnconfigure(col, weight=1)
+            sub = ctk.CTkFrame(frame_grid, fg_color="transparent")
+            sub.grid(row=row, column=col, padx=8, pady=4, sticky="ew")
+            ctk.CTkLabel(sub, text=label, font=("Arial", 10),
+                         text_color="gray").pack(anchor="w")
+            entry = ctk.CTkEntry(sub, height=30, placeholder_text=placeholder,
+                                 state="disabled", fg_color=("gray90", "gray20"))
+            entry.pack(fill="x")
+
+    def cambiar_seccion(self, seccion):
+        self.seccion_activa = seccion
+        for nombre, frame in self.frames_seccion.items():
+            if nombre == seccion:
+                frame.pack(fill="both", expand=True, padx=4, pady=4)
+            else:
+                frame.pack_forget()
+        for nombre, btn in self.botones_nav.items():
+            if nombre == seccion:
+                btn.configure(fg_color=("gray75", "gray30"))
+            else:
+                btn.configure(fg_color="transparent")
+
 if __name__ == "__main__":
     app = App()
     app.mainloop()
