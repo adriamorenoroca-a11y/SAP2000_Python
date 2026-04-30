@@ -3,6 +3,7 @@ import customtkinter as ctk
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")
 
+
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -17,7 +18,7 @@ class App(ctk.CTk):
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        # Panel izquierdo
+        # ── Panel izquierdo ───────────────────────────────────
         self.panel_izq = ctk.CTkFrame(self, width=220)
         self.panel_izq.grid(row=0, column=0, padx=10, pady=10, sticky="ns")
         self.panel_izq.grid_propagate(False)
@@ -39,6 +40,7 @@ class App(ctk.CTk):
                 fg_color="transparent",
                 text_color=("black", "white"),
                 anchor="w", height=32,
+                command=lambda s=seccion: self.cambiar_seccion(s)
             )
             btn.pack(padx=10, fill="x")
             self.botones_nav[seccion] = btn
@@ -47,16 +49,20 @@ class App(ctk.CTk):
                       height=40, font=("Arial", 13, "bold")
                       ).pack(padx=10, pady=20, fill="x", side="bottom")
 
-        # Panel derecho
+        # ── Panel derecho ─────────────────────────────────────
         self.panel_der = ctk.CTkFrame(self)
         self.panel_der.grid(row=0, column=1, padx=(0, 10), pady=10, sticky="nsew")
         self.panel_der.grid_rowconfigure(0, weight=1)
         self.panel_der.grid_columnconfigure(0, weight=1)
 
         self._crear_frame_geometria()
+        self._crear_frame_materiales()
+        self._crear_frame_links()
         self._crear_frame_cargas()
 
         self.cambiar_seccion("Geometría")
+
+    # ── Frames de cada sección ────────────────────────────────
 
     def _crear_frame_geometria(self):
         f = ctk.CTkScrollableFrame(self.panel_der)
@@ -89,6 +95,68 @@ class App(ctk.CTk):
                                  state="disabled", fg_color=("gray90", "gray20"))
             entry.pack(fill="x")
 
+        # ── Recuadros de resumen ──────────────────────────────
+        frame_resumen = ctk.CTkFrame(f, fg_color="transparent")
+        frame_resumen.pack(padx=16, pady=(12, 4), fill="x")
+        frame_resumen.grid_columnconfigure((0, 1, 2), weight=1)
+
+        for col, (titulo, valor) in enumerate([
+            ("Nodos totales", "—"),
+            ("Áreas totales", "—"),
+            ("Longitud total (m)", "—"),
+        ]):
+            card = ctk.CTkFrame(frame_resumen)
+            card.grid(row=0, column=col, padx=6, sticky="ew")
+            ctk.CTkLabel(card, text=titulo, font=("Arial", 10),
+                         text_color="gray").pack(pady=(8, 2))
+            ctk.CTkLabel(card, text=valor, font=("Arial", 16, "bold")).pack(pady=(0, 8))
+
+        ctk.CTkLabel(f, text="Vista previa — anillo base",
+                     font=("Arial", 13, "bold")).pack(padx=16, pady=(16, 4), anchor="w")
+
+        placeholder_grafico = ctk.CTkFrame(f, height=280, fg_color=("gray90", "gray20"))
+        placeholder_grafico.pack(padx=16, pady=8, fill="x")
+        placeholder_grafico.pack_propagate(False)
+        ctk.CTkLabel(placeholder_grafico,
+                     text="El gráfico del anillo base aparecerá aquí",
+                     text_color="gray").place(relx=0.5, rely=0.5, anchor="center")
+
+    def _crear_frame_materiales(self):
+        f = ctk.CTkScrollableFrame(self.panel_der)
+        self.frames_seccion["Materiales"] = f
+
+        ctk.CTkLabel(f, text="Materiales y secciones",
+                     font=("Arial", 14, "bold")).pack(padx=16, pady=(16, 8), anchor="w")
+
+        contenido = ctk.CTkFrame(f, fg_color="transparent")
+        contenido.pack(padx=16, fill="x")
+
+        for _ in range(2):
+            frame = ctk.CTkFrame(contenido)
+            frame.pack(fill="x", pady=4)
+            ctk.CTkLabel(frame, text="Material: —",
+                         font=("Arial", 12, "bold")).pack(padx=10, pady=(8, 2), anchor="w")
+            ctk.CTkLabel(frame, text="Tipo: — | Norma: — | Grade: —",
+                         font=("Arial", 11), text_color="gray").pack(padx=10, pady=(0, 8), anchor="w")
+
+    def _crear_frame_links(self):
+        f = ctk.CTkScrollableFrame(self.panel_der)
+        self.frames_seccion["Links"] = f
+
+        ctk.CTkLabel(f, text="Links entre módulos",
+                     font=("Arial", 14, "bold")).pack(padx=16, pady=(16, 8), anchor="w")
+
+        contenido = ctk.CTkFrame(f, fg_color="transparent")
+        contenido.pack(padx=16, fill="x")
+
+        for _ in range(4):
+            frame = ctk.CTkFrame(contenido)
+            frame.pack(fill="x", pady=4)
+            ctk.CTkLabel(frame, text="Link: —",
+                         font=("Arial", 12, "bold")).pack(padx=10, pady=(8, 2), anchor="w")
+            ctk.CTkLabel(frame, text="Tipo: —",
+                         font=("Arial", 11), text_color="gray").pack(padx=10, pady=(0, 8), anchor="w")
+
     def _crear_frame_cargas(self):
         f = ctk.CTkScrollableFrame(self.panel_der)
         self.frames_seccion["Cargas"] = f
@@ -119,6 +187,44 @@ class App(ctk.CTk):
                                  state="disabled", fg_color=("gray90", "gray20"))
             entry.pack(fill="x")
 
+        ctk.CTkLabel(f, text="Verificación de presiones",
+                     font=("Arial", 13, "bold")).pack(padx=16, pady=(16, 4), anchor="w")
+
+        frame_presiones = ctk.CTkFrame(f)
+        frame_presiones.pack(padx=16, pady=8, fill="x")
+        ctk.CTkLabel(frame_presiones,
+                     text="Carga el Excel para ver los valores.",
+                     text_color="gray").pack(pady=12)
+
+        ctk.CTkLabel(f, text="Progreso de generación",
+                     font=("Arial", 13, "bold")).pack(padx=16, pady=(16, 4), anchor="w")
+
+        frame_progreso = ctk.CTkFrame(f)
+        frame_progreso.pack(padx=16, pady=4, fill="x")
+
+        pasos = [
+            ("✓", "Materiales y secciones creadas", "#2d9e5f"),
+            ("✓", "Nodos generados", "#2d9e5f"),
+            ("✓", "Áreas creadas", "#2d9e5f"),
+            ("○", "Creando links entre módulos...", "gray"),
+            ("○", "Aplicar cargas", "gray"),
+        ]
+        for icono, texto, color in pasos:
+            fila = ctk.CTkFrame(frame_progreso, fg_color="transparent")
+            fila.pack(fill="x", padx=10, pady=2)
+            ctk.CTkLabel(fila, text=icono, font=("Arial", 13, "bold"),
+                         text_color=color, width=20).pack(side="left")
+            ctk.CTkLabel(fila, text=texto, font=("Arial", 11),
+                         text_color=color).pack(side="left", padx=6)
+
+        progreso = ctk.CTkProgressBar(f)
+        progreso.pack(padx=16, pady=(8, 4), fill="x")
+        progreso.set(0.65)
+        ctk.CTkLabel(f, text="65%", font=("Arial", 11),
+                     text_color="gray").pack(padx=16, pady=(0, 8), anchor="e")
+
+    # ── Navegación ────────────────────────────────────────────
+
     def cambiar_seccion(self, seccion):
         self.seccion_activa = seccion
         for nombre, frame in self.frames_seccion.items():
@@ -131,6 +237,7 @@ class App(ctk.CTk):
                 btn.configure(fg_color=("gray75", "gray30"))
             else:
                 btn.configure(fg_color="transparent")
+
 
 if __name__ == "__main__":
     app = App()
