@@ -132,3 +132,70 @@ def crear_nodos_areas(SapModel, datos):
             anillo_actual = copiar_anillo(anillo_actual, Separacion_modulos)
 
     print("Nodos creados con ejes locales asignados")
+
+    # ── Springs ───────────────────────────────────────────────────────
+    df_asprings = datos["df_asprings"].dropna(subset=[datos["df_asprings"].columns[2]])
+    asprings    = dict(zip(df_asprings.iloc[:, 2], df_asprings.iloc[:, 3]))
+    axis_3      = float(asprings["Compression only - Axis 3 (kN/m/m2):"])
+    axis_2      = float(asprings["Tension and Compression - Axis 2 (kN/m/m2):"])
+    axis_1      = float(asprings["Tension and Compression - Axis 1 (kN/m/m2):"])
+    Vec         = [0.0, 0.0, 0.0]
+
+    spring_defs = [
+        (axis_3, 2, -3, True),
+        (axis_2, 1, -2, False),
+        (axis_1, 1, -1, False),
+    ]
+
+    prop_area = str(datos["df_prop_raw"].iloc[0, 1]).strip()
+    print(f"Lining area: {prop_area}")
+
+    # ── Crear areas + ejes locales + springs ──────────────────────────
+    areas_modulos = []
+
+    for m, anillos_modulo in enumerate(modulos):
+        print(f"Creando áreas módulo {m + 1}")
+        areas_modulo = []
+        n = len(anillos_modulo[0])
+
+        for j in range(len(anillos_modulo) - 1):
+            anillo_inf = anillos_modulo[j]
+            anillo_sup = anillos_modulo[j + 1]
+
+            for i in range(n):
+                n1      = anillo_inf[i]
+                n2      = anillo_sup[i]
+                n1_next = anillo_inf[(i + 1) % n]
+                n2_next = anillo_sup[(i + 1) % n]
+
+                if eje_long == "Y":
+                    area_data = SapModel.AreaObj.AddByPoint(4, (n1, n2, n2_next, n1_next), prop_area)
+                else:
+                    area_data = SapModel.AreaObj.AddByPoint(4, (n1_next, n2_next, n2, n1), prop_area)
+                area_name = area_data[1]
+
+                ret  = SapModel.AreaObj.SetLocalAxesAdvanced(
+                    area_name, True, area_plane, 1, "GLOBAL", PlDir_area, PlPt_area, PlVect_area
+                )
+                code = ret[-1] if isinstance(ret, (list, tuple)) else ret
+                if code != 0:
+                    print(f"  Warning ejes area {area_name}, code={code}")
+
+                for stiffness, nonlinear_type, direction, replace in spring_defs:
+                    SapModel.AreaObj.SetSpring(
+                        area_name, 1, stiffness, nonlinear_type,
+                        "", -2, 1, direction, True, Vec, 0.0, replace, "Local"
+                    )
+
+                areas_modulo.append(area_data)
+
+        areas_modulos.append(areas_modulo)
+
+    print(f"Areas creadas: {sum(len(m) for m in areas_modulos)}")
+
+    # Guardar prop_area y spring_defs en ejes para uso posterior
+    ejes["prop_area"]   = prop_area
+    ejes["spring_defs"] = spring_defs
+    ejes["Vec"]         = Vec
+
+    return modulos, areas_modulos, ejes
