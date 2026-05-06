@@ -71,3 +71,64 @@ def crear_nodos_areas(SapModel, datos):
         "Nodos_entre_conectores": Nodos_entre_conectores,
         "Nodos_por_anillo": Nodos_por_anillo,
     }
+
+    def set_point_local_axes(name):
+        ret  = SapModel.PointObj.SetLocalAxesAdvanced(
+            name, True, 1, "GLOBAL", AxDir_jt, AxPt_jt, AxVect_jt,
+            joint_plane, 1, "GLOBAL", PlDir_jt, PlPt_jt, PlVect_jt
+        )
+        code = ret[-1] if isinstance(ret, (list, tuple)) else ret
+        if code != 0:
+            print(f"  Warning ejes nodo {name}, code={code}")
+
+    def crear_nodo(x_excel, y_long, z_excel):
+        if eje_long == "Y":
+            x_sap, y_sap, z_sap = x_excel, y_long, z_excel
+        else:
+            x_sap, y_sap, z_sap = y_long, x_excel, z_excel
+        nombre, ret = SapModel.PointObj.AddCartesian(x_sap, y_sap, z_sap)
+        if ret != 0:
+            raise Exception(f"Error creando nodo ({x_sap}, {y_sap}, {z_sap})")
+        set_point_local_axes(nombre)
+        return nombre
+
+    def copiar_anillo(anillo_origen, dy):
+        anillo_nuevo = []
+        for nodo in anillo_origen:
+            x, y, z, ret = SapModel.PointObj.GetCoordCartesian(nodo)
+            if ret != 0:
+                raise Exception(f"Error leyendo nodo {nodo}")
+            if eje_long == "Y":
+                anillo_nuevo.append(crear_nodo(x, y + dy, z))
+            else:
+                anillo_nuevo.append(crear_nodo(y, x + dy, z))
+        return anillo_nuevo
+
+    # ── Anillo base ───────────────────────────────────────────────────
+    df_nodos = datos["df_nodos"].copy()
+    df_nodos.columns = ["Nodo", "X", "Y_excel", "Z"]
+    df_nodos = df_nodos.dropna(subset=["Nodo", "X", "Z"])
+
+    anillo_base = [
+        crear_nodo(float(f["X"]), 0.0, float(f["Z"]))
+        for _, f in df_nodos.iterrows()
+    ]
+
+    # ── Construir modulos ─────────────────────────────────────────────
+    modulos       = []
+    anillo_actual = anillo_base
+
+    for m in range(Numero_modulos):
+        print(f"Creando módulo {m + 1}")
+        anillos_modulo = [anillo_actual]
+
+        for _ in range(n_areas_por_anillo_en_longitudinal):
+            anillo_actual = copiar_anillo(anillo_actual, Longitud_mallazo_en_longitudinal)
+            anillos_modulo.append(anillo_actual)
+
+        modulos.append(anillos_modulo)
+
+        if m < Numero_modulos - 1:
+            anillo_actual = copiar_anillo(anillo_actual, Separacion_modulos)
+
+    print("Nodos creados con ejes locales asignados")
