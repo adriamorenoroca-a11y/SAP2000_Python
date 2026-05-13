@@ -22,3 +22,15 @@ def crear_load_patterns(SapModel, datos):
         else:
             print(f"✔ Load pattern: {name}")
 
+
+def crear_load_cases(SapModel, datos):
+    df_pat = datos["df_pat"]
+    todos_los_casos = ["DEAD"] + [str(fila.iloc[0]).strip() for _, fila in df_pat.iterrows()]
+
+    for name in todos_los_casos:
+        ret  = SapModel.LoadCases.StaticNonlinear.SetCase(name)
+        code = ret[-1] if isinstance(ret, (list, tuple)) else ret
+        if code != 0:
+            print(f"  ⚠ Error load case nonlinear: {name}")
+        else:
+            print(f"✔ Load case nonlinear: {name}")
