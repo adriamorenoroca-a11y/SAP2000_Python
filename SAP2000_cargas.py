@@ -95,3 +95,11 @@ def aplicar_cargas(SapModel, datos, areas_modulos, areas_nuevas_nombres, ejes):
         p_gw = gamma_agua * (H_agua_clave + dZ)
         SapModel.AreaObj.SetLoadUniform(area_name, "Ground Water (GW)", -p_gw, 3, True, "Local")
 
+        # Horizontal segun posicion transversal
+        if abs(trans_c) > 1e-6:
+            sign_trans = -1 if trans_c > 0 else 1
+            p_h    = k0 * gamma_terreno * (H_clave + dZ)
+            p_heff = k0 * (gamma_terreno * H_seco + gamma_t_eff * (H_sumerg + dZ))
+            SapModel.AreaObj.SetLoadUniform(area_name, "Ground Load H (GL)",        sign_trans * p_h,    dir_proj_H, True, "GLOBAL")
+            SapModel.AreaObj.SetLoadUniform(area_name, "Ground Load Heff. (GLeff)", sign_trans * p_heff, dir_proj_H, True, "GLOBAL")
+
