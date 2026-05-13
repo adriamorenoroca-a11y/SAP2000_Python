@@ -103,3 +103,16 @@ def aplicar_cargas(SapModel, datos, areas_modulos, areas_nuevas_nombres, ejes):
             SapModel.AreaObj.SetLoadUniform(area_name, "Ground Load H (GL)",        sign_trans * p_h,    dir_proj_H, True, "GLOBAL")
             SapModel.AreaObj.SetLoadUniform(area_name, "Ground Load Heff. (GLeff)", sign_trans * p_heff, dir_proj_H, True, "GLOBAL")
 
+        # Vertical solo mitad superior
+        if z_c > 0:
+            p_v    = gamma_terreno * (H_clave + dZ)
+            p_veff = gamma_terreno * H_seco + gamma_t_eff * (H_sumerg + dZ)
+            SapModel.AreaObj.SetLoadUniform(area_name, "Ground Load V (GL)",        -p_v,    9, True, "GLOBAL")
+            SapModel.AreaObj.SetLoadUniform(area_name, "Ground Load Veff. (GLeff)", -p_veff, 9, True, "GLOBAL")
+
+    # Areas principales
+    for areas_modulo in areas_modulos:
+        for area_data in areas_modulo:
+            aplicar_a_area(area_data[1])
+
+    print("Cargas aplicadas correctamente")
