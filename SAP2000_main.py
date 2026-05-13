@@ -2,6 +2,7 @@ from SAP2000_conexion    import conectar_sap
 from SAP2000_excel       import leer_excel
 from SAP2000_materiales  import crear_materiales, crear_secciones, crear_armaduras
 from SAP2000_geometria   import crear_nodos_areas
+from SAP2000_cargas      import crear_load_patterns, crear_load_cases, aplicar_cargas
 
 
 
@@ -20,6 +21,10 @@ def generar_modelo(ruta_excel):
 
     # ── 4. Geometría (nodos, anillos, módulos, áreas, springs) ────────
     modulos, areas_modulos, ejes = crear_nodos_areas(SapModel, datos)
+
+    # ── 5. Load Patterns + Load Cases ─────────────────────────────────
+    crear_load_patterns(SapModel, datos)
+    crear_load_cases(SapModel, datos)
 
 if __name__ == "__main__":
     generar_modelo(r"C:\Users\adria.moreno\OneDrive - Global Infrastructure\Python - SAP2000\Coordenadas_Nodos.xlsx")
