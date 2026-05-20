@@ -26,3 +26,43 @@ def crear_propiedades_links(SapModel, datos):
     datos["df_links_clean"]    = df_links
     return {nombre: [] for nombre in propiedades_links}
 
+def crear_links(SapModel, datos, modulos, links_modulos, ejes):
+    propiedades_links       = datos["propiedades_links"]
+    Nodos_por_anillo        = ejes["Nodos_por_anillo"]
+    Nodos_entre_conectores  = ejes["Nodos_entre_conectores"]
+    link_plane              = ejes["link_plane"]
+    AxDir_lk                = ejes["AxDir_lk"]
+    AxPt_lk                 = ejes["AxPt_lk"]
+    AxVect_lk               = ejes["AxVect_lk"]
+    PlDir_lk                = ejes["PlDir_lk"]
+    PlPt_lk                 = ejes["PlPt_lk"]
+    PlVect_lk               = ejes["PlVect_lk"]
+
+    for m in range(len(modulos) - 1):
+        anillo_inf   = modulos[m][-1]
+        anillo_sup   = modulos[m + 1][0]
+        links_modulo = {nombre: [] for nombre in propiedades_links}
+
+        for i in range(Nodos_por_anillo):
+            nodo_inf = anillo_inf[i]
+            nodo_sup = anillo_sup[i]
+
+            for nombre in propiedades_links:
+                if nombre == "Connector" and (i % Nodos_entre_conectores) != 0:
+                    continue
+
+                link_name, ret = SapModel.LinkObj.AddByPoint(nodo_inf, nodo_sup, "", False)
+                ret2 = SapModel.LinkObj.SetLocalAxesAdvanced(
+                    link_name, True, 1, "GLOBAL", AxDir_lk, AxPt_lk, AxVect_lk,
+                    link_plane, 1, "GLOBAL", PlDir_lk, PlPt_lk, PlVect_lk
+                )
+                links_modulo[nombre].append(link_name)
+
+        for nombre in propiedades_links:
+            links_modulos[nombre].append(links_modulo[nombre])
+
+    for tipo, modulos_links in links_modulos.items():
+        for m, lista in enumerate(modulos_links):
+            print(f"{tipo} | Módulo {m+1}-{m+2}: {len(lista)} links")
+
+    return links_modulos
