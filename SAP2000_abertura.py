@@ -35,4 +35,26 @@ def crear_abertura(SapModel, datos, modulos, areas_modulos, links_modulos, ejes)
     else:
         lado = (lambda t: t < 0) if side == "Right (x>0)" else (lambda t: t > 0)
 
+    # ── Modulos afectados ─────────────────────────────────────────────
+    centro          = Numero_modulos // 2
+    mitad_inf       = n_modulos_completos // 2
+    mitad_sup       = n_modulos_completos - mitad_inf
+    idx_completos   = list(range(centro - mitad_inf, centro + mitad_sup))
+    idx_parcial_inf = idx_completos[0] - 1
+    idx_parcial_sup = idx_completos[-1] + 1
+
+    print(f"Módulos completos abiertos: {[m+1 for m in idx_completos]}")
+    print(f"Módulos parciales: {idx_parcial_inf+1} y {idx_parcial_sup+1}")
+
+    # ── Limites longitudinales de cada modulo ─────────────────────────
+    Y_limites_modulos = {}
+    for m, anillos_modulo in enumerate(modulos):
+        todos_long = []
+        for anillo in anillos_modulo:
+            for nodo in anillo:
+                x, y, z, ret = SapModel.PointObj.GetCoordCartesian(nodo)
+                todos_long.append(x if eje_long == "X" else y)
+        Y_limites_modulos[m] = (min(todos_long), max(todos_long))
+
+    print("Y limites modulos:", {m+1: v for m, v in Y_limites_modulos.items()})
 
