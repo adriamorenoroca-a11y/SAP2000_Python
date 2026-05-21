@@ -79,3 +79,63 @@ def crear_abertura(SapModel, datos, modulos, areas_modulos, links_modulos, ejes)
 
     return areas_nuevas_nombres
 
+def _snap_to_nodes(SapModel, datos, modulos, areas_modulos, links_modulos,
+                   lado, idx_completos, idx_parcial_inf, idx_parcial_sup,
+                   Y_limites_modulos, Z_max_opening, Z_min_opening, ancho_extra, eje_long):
+
+    todos_z = set()
+    for anillos_modulo in modulos:
+        for anillo in anillos_modulo:
+            for nodo in anillo:
+                x, y, z, ret = SapModel.PointObj.GetCoordCartesian(nodo)
+                todos_z.add(round(z, 6))
+
+    todos_z    = sorted(todos_z)
+    Z_max_snap = max((z for z in todos_z if z <= Z_max_opening), default=None)
+    Z_min_snap = min((z for z in todos_z if z >= Z_min_opening), default=None)
+    print(f"Snap Z_max ajustado: {Z_max_snap} | Z_min ajustado: {Z_min_snap}")
+
+    areas_a_eliminar = []
+
+    for m, areas_modulo in enumerate(areas_modulos):
+        if m not in idx_completos and m != idx_parcial_inf and m != idx_parcial_sup:
+            continue
+
+        for area_data in areas_modulo:
+            area_name = area_data[1]
+            n_pts, nodos, ret = SapModel.AreaObj.GetPoints(area_name)
+
+            xs, ys, zs = [], [], []
+            for nodo in nodos:
+                x, y, z, ret = SapModel.PointObj.GetCoordCartesian(nodo)
+                xs.append(x); ys.append(y); zs.append(z)
+
+            x_c    = sum(xs) / n_pts
+            y_c    = sum(ys) / n_pts
+            z_c    = sum(zs) / n_pts
+            long_c = x_c if eje_long == "X" else y_c
+            trans_c= x_c if eje_long == "Y" else y_c
+
+            if not lado(trans_c):
+                continue
+            if not (Z_min_snap <= z_c <= Z_max_snap):
+                continue
+
+            if m == idx_parcial_inf:
+                long_ini, long_fin = Y_limites_modulos[m]
+                if not (long_fin - long_c <= ancho_extra):
+                    continue
+            elif m == idx_parcial_sup:
+                long_ini, long_fin = Y_limites_modulos[m]
+                if not (long_c - long_ini <= ancho_extra):
+                    continue
+
+            areas_a_eliminar.append((area_name, list(nodos)))
+
+    nodos_candidatos = set()
+    for area_name, nodos_area in areas_a_eliminar:
+        for nodo in nodos_area:
+            nodos_candidatos.add(nodo)
+        SapModel.AreaObj.Delete(area_name)
+
+    print(f"Areas eliminadas: {len(areas_a_eliminar)}")
