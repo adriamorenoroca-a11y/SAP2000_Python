@@ -58,3 +58,24 @@ def crear_abertura(SapModel, datos, modulos, areas_modulos, links_modulos, ejes)
 
     print("Y limites modulos:", {m+1: v for m, v in Y_limites_modulos.items()})
 
+    areas_nuevas_nombres = []
+
+    if method == "Snap to nodes":
+        areas_nuevas_nombres = _snap_to_nodes(
+            SapModel, datos, modulos, areas_modulos, links_modulos,
+            lado, idx_completos, idx_parcial_inf, idx_parcial_sup,
+            Y_limites_modulos, Z_max_opening, Z_min_opening, ancho_extra, eje_long
+        )
+
+    elif method == "Exact cut":
+        areas_nuevas_nombres = _exact_cut(
+            SapModel, datos, modulos, areas_modulos, links_modulos, ejes,
+            lado, idx_completos, idx_parcial_inf, idx_parcial_sup,
+            Y_limites_modulos, Z_max_opening, Z_min_opening, ancho_extra,
+            eje_long, side, prop_area, spring_defs, Vec, area_plane,
+            PlDir_area, PlPt_area, PlVect_area, joint_plane,
+            AxDir_jt, AxPt_jt, AxVect_jt, PlDir_jt, PlPt_jt, PlVect_jt
+        )
+
+    return areas_nuevas_nombres
+
