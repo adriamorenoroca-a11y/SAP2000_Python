@@ -139,3 +139,44 @@ def _snap_to_nodes(SapModel, datos, modulos, areas_modulos, links_modulos,
         SapModel.AreaObj.Delete(area_name)
 
     print(f"Areas eliminadas: {len(areas_a_eliminar)}")
+
+
+    # Eliminar links
+    links_eliminados = 0
+    for tipo, modulos_links in links_modulos.items():
+        for m, lista_links in enumerate(modulos_links):
+            if m not in [idx_parcial_inf, idx_completos[0] - 1] + \
+                    list(range(idx_completos[0], idx_completos[-1] + 1)) + \
+                    [idx_parcial_sup - 1]:
+                continue
+
+            for link in lista_links:
+                link = str(link)
+                x1, y1, z1, _ = SapModel.PointObj.GetCoordCartesian(SapModel.LinkObj.GetPoints(link)[0])
+                x2, y2, z2, _ = SapModel.PointObj.GetCoordCartesian(SapModel.LinkObj.GetPoints(link)[1])
+
+                x_c = (x1 + x2) / 2
+                y_c = (y1 + y2) / 2
+                z_c = (z1 + z2) / 2
+
+                trans_c = x_c if eje_long == "Y" else y_c
+                if not lado(trans_c):
+                    continue
+                if not (Z_min_snap <= z_c <= Z_max_snap):
+                    continue
+
+                SapModel.LinkObj.Delete(link)
+                links_eliminados += 1
+
+    print(f"Links eliminados: {links_eliminados}")
+
+    # Eliminar nodos huerfanos
+    nodos_eliminados = 0
+    for nodo in nodos_candidatos:
+        ret  = SapModel.PointObj.DeleteSpecialPoint(nodo)
+        code = ret[-1] if isinstance(ret, (list, tuple)) else ret
+        if code == 0:
+            nodos_eliminados += 1
+
+    print(f"Nodos huerfanos eliminados: {nodos_eliminados}")
+    return []
