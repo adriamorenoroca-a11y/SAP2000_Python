@@ -4,6 +4,7 @@ from SAP2000_materiales  import crear_materiales, crear_secciones, crear_armadur
 from SAP2000_geometria   import crear_nodos_areas
 from SAP2000_cargas      import crear_load_patterns, crear_load_cases, aplicar_cargas
 from SAP2000_links       import crear_propiedades_links, crear_links
+from SAP2000_abertura    import crear_abertura
 
 
 def generar_modelo(ruta_excel):
@@ -29,6 +30,9 @@ def generar_modelo(ruta_excel):
     # ── 6. Links ──────────────────────────────────────────────────────
     links_modulos = crear_propiedades_links(SapModel, datos)
     links_modulos = crear_links(SapModel, datos, modulos, links_modulos, ejes)
+
+    # ── 7. Abertura ───────────────────────────────────────────────────
+    areas_nuevas_nombres = crear_abertura(SapModel, datos, modulos, areas_modulos, links_modulos, ejes)
 
 if __name__ == "__main__":
     generar_modelo(r"C:\Users\adria.moreno\OneDrive - Global Infrastructure\Python - SAP2000\Coordenadas_Nodos.xlsx")
