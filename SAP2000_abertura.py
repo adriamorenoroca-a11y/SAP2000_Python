@@ -273,3 +273,28 @@ def _exact_cut(SapModel, datos, modulos, areas_modulos, links_modulos, ejes,
                 dentro_Y = long_c <= Y_corte_sup
             else:
                 dentro_Y = True
+
+            # CASO 1
+            if dentro_Z and dentro_Y and not cruza_Zmax and not cruza_Zmin and not cruza_Y:
+                areas_a_eliminar.append(area_name)
+
+            # CASO 2
+            elif cruza_Zmax and not cruza_Y and dentro_Y:
+                n_za = interpolar_nodo(n1, n1_next, Z_max_opening, "Z")
+                n_zb = interpolar_nodo(n2, n2_next, Z_max_opening, "Z")
+                areas_a_eliminar.append(area_name)
+                if z1 < Z_max_opening:
+                    areas_nuevas.append(((n_za, n_zb, n2_next, n1_next), prop_area))
+                else:
+                    areas_nuevas.append(((n1, n2, n_zb, n_za), prop_area))
+
+            # CASO 3
+            elif cruza_Zmin and not cruza_Y and dentro_Y:
+                n_za = interpolar_nodo(n1, n1_next, Z_min_opening, "Z")
+                n_zb = interpolar_nodo(n2, n2_next, Z_min_opening, "Z")
+                areas_a_eliminar.append(area_name)
+                if z1 > Z_min_opening:
+                    areas_nuevas.append(((n_za, n_zb, n2_next, n1_next), prop_area))
+                else:
+                    areas_nuevas.append(((n1, n2, n_zb, n_za), prop_area))
+
