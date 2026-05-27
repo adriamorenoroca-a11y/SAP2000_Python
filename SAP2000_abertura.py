@@ -298,3 +298,107 @@ def _exact_cut(SapModel, datos, modulos, areas_modulos, links_modulos, ejes,
                 else:
                     areas_nuevas.append(((n1, n2, n_zb, n_za), prop_area))
 
+            # CASO 4
+            elif cruza_Y and not cruza_Zmax and not cruza_Zmin and dentro_Z:
+                n_ya = interpolar_nodo(n1, n2, Y_corte, "Y")
+                n_yb = interpolar_nodo(n1_next, n2_next, Y_corte, "Y")
+                areas_a_eliminar.append(area_name)
+                if m == idx_parcial_inf:
+                    areas_nuevas.append(((n1, n_ya, n_yb, n1_next), prop_area))
+                else:
+                    areas_nuevas.append(((n_ya, n2, n2_next, n_yb), prop_area))
+
+            # CASO 5
+            elif cruza_Zmax and cruza_Y:
+                n_za  = interpolar_nodo(n1,    n1_next, Z_max_opening, "Z")
+                n_zb  = interpolar_nodo(n2,    n2_next, Z_max_opening, "Z")
+                n_ya  = interpolar_nodo(n1,    n2,      Y_corte, "Y")
+                n_yb  = interpolar_nodo(n1_next, n2_next, Y_corte, "Y")
+                n_yza = interpolar_nodo(n_za,  n_zb,    Y_corte, "Y")
+                areas_a_eliminar.append(area_name)
+
+                if m == idx_parcial_inf:
+                    if z1 < Z_max_opening:
+                        if side == "Right (x>0)":
+                            areas_nuevas.append(((n_zb, n2_next, n_yb, n_yza), prop_area))
+                            areas_nuevas.append(((n1, n_ya, n_yza, n_za), prop_area))
+                            areas_nuevas.append(((n_za, n_yza, n_yb, n1_next), prop_area))
+                        else:
+                            if eje_long == "Y":
+                                areas_nuevas.append(((n2, n_zb, n_yza, n_ya), prop_area))
+                                areas_nuevas.append(((n1, n_ya, n_yza, n_za), prop_area))
+                                areas_nuevas.append(((n_za, n_yza, n_yb, n1_next), prop_area))
+                            else:
+                                areas_nuevas.append(((n_zb, n2_next, n_yb, n_yza), prop_area))
+                                areas_nuevas.append(((n1, n_ya, n_yza, n_za), prop_area))
+                                areas_nuevas.append(((n_za, n_yza, n_yb, n1_next), prop_area))
+                    else:
+                        areas_nuevas.append(((n2, n_zb, n_yza, n_ya), prop_area))
+                        areas_nuevas.append(((n1, n_ya, n_yza, n_za), prop_area))
+                        areas_nuevas.append(((n_za, n_yza, n_yb, n1_next), prop_area))
+                else:
+                    if z1 < Z_max_opening:
+                        if side == "Right (x>0)":
+                            areas_nuevas.append(((n2, n_zb, n_yza, n_ya), prop_area))
+                            areas_nuevas.append(((n_zb, n2_next, n_yb, n_yza), prop_area))
+                            areas_nuevas.append(((n_za, n_yza, n_yb, n1_next), prop_area))
+                        else:
+                            if eje_long == "Y":
+                                areas_nuevas.append(((n2, n_zb, n_yza, n_ya), prop_area))
+                                areas_nuevas.append(((n_zb, n2_next, n_yb, n_yza), prop_area))
+                                areas_nuevas.append(((n1, n_ya, n_yza, n_za), prop_area))
+                            else:
+                                areas_nuevas.append(((n2, n_zb, n_yza, n_ya), prop_area))
+                                areas_nuevas.append(((n_zb, n2_next, n_yb, n_yza), prop_area))
+                                areas_nuevas.append(((n_za, n_yza, n_yb, n1_next), prop_area))
+                    else:
+                        if side == "Right (x>0)":
+                            if eje_long == "Y":
+                                areas_nuevas.append(((n_zb, n2_next, n_yb, n_yza), prop_area))
+                                areas_nuevas.append(((n1, n_ya, n_yza, n_za), prop_area))
+                                areas_nuevas.append(((n_za, n_yza, n_yb, n1_next), prop_area))
+                            else:
+                                areas_nuevas.append(((n2, n_zb, n_yza, n_ya), prop_area))
+                                areas_nuevas.append(((n_zb, n2_next, n_yb, n_yza), prop_area))
+                                areas_nuevas.append(((n1, n_ya, n_yza, n_za), prop_area))
+                        else:
+                            areas_nuevas.append(((n2, n_zb, n_yza, n_ya), prop_area))
+                            areas_nuevas.append(((n_zb, n2_next, n_yb, n_yza), prop_area))
+                            areas_nuevas.append(((n1, n_ya, n_yza, n_za), prop_area))
+
+            # CASO 6
+            elif cruza_Zmin and cruza_Y:
+                n_za  = interpolar_nodo(n1,    n1_next, Z_min_opening, "Z")
+                n_zb  = interpolar_nodo(n2,    n2_next, Z_min_opening, "Z")
+                n_ya  = interpolar_nodo(n1,    n2,      Y_corte, "Y")
+                n_yb  = interpolar_nodo(n1_next, n2_next, Y_corte, "Y")
+                n_yza = interpolar_nodo(n_za,  n_zb,    Y_corte, "Y")
+                areas_a_eliminar.append(area_name)
+
+                if m == idx_parcial_inf:
+                    if z1 > Z_min_opening:
+                        areas_nuevas.append(((n_zb, n2_next, n_yb, n_yza), prop_area))
+                        areas_nuevas.append(((n1, n_ya, n_yza, n_za), prop_area))
+                        areas_nuevas.append(((n_za, n_yza, n_yb, n1_next), prop_area))
+                    else:
+                        areas_nuevas.append(((n2, n_zb, n_yza, n_ya), prop_area))
+                        areas_nuevas.append(((n1, n_ya, n_yza, n_za), prop_area))
+                        areas_nuevas.append(((n_za, n_yza, n_yb, n1_next), prop_area))
+                else:
+                    if z1 > Z_min_opening:
+                        areas_nuevas.append(((n2, n_zb, n_yza, n_ya), prop_area))
+                        areas_nuevas.append(((n_zb, n2_next, n_yb, n_yza), prop_area))
+                        areas_nuevas.append(((n_za, n_yza, n_yb, n1_next), prop_area))
+                    else:
+                        if side == "Right (x>0)":
+                            areas_nuevas.append(((n2, n_zb, n_yza, n_ya), prop_area))
+                            areas_nuevas.append(((n_zb, n2_next, n_yb, n_yza), prop_area))
+                            areas_nuevas.append(((n1, n_ya, n_yza, n_za), prop_area))
+                        elif eje_long == "Y":
+                            areas_nuevas.append(((n2, n_zb, n_yza, n_ya), prop_area))
+                            areas_nuevas.append(((n1, n_ya, n_yza, n_za), prop_area))
+                            areas_nuevas.append(((n_za, n_yza, n_yb, n1_next), prop_area))
+                        else:
+                            areas_nuevas.append(((n2, n_zb, n_yza, n_ya), prop_area))
+                            areas_nuevas.append(((n_zb, n2_next, n_yb, n_yza), prop_area))
+                            areas_nuevas.append(((n1, n_ya, n_yza, n_za), prop_area))
