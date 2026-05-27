@@ -402,3 +402,90 @@ def _exact_cut(SapModel, datos, modulos, areas_modulos, links_modulos, ejes,
                             areas_nuevas.append(((n2, n_zb, n_yza, n_ya), prop_area))
                             areas_nuevas.append(((n_zb, n2_next, n_yb, n_yza), prop_area))
                             areas_nuevas.append(((n1, n_ya, n_yza, n_za), prop_area))
+
+
+    # Eliminar areas originales
+    nodos_candidatos = set()
+    for area_name in areas_a_eliminar:
+        n_pts, nodos, ret = SapModel.AreaObj.GetPoints(area_name)
+        for nodo in nodos:
+            nodos_candidatos.add(nodo)
+        SapModel.AreaObj.Delete(area_name)
+    print(f"Areas eliminadas: {len(areas_a_eliminar)}")
+
+    # Crear areas nuevas + ejes locales + springs
+    areas_nuevas_nombres = []
+    for nodos_area, prop in areas_nuevas:
+
+        area_data = SapModel.AreaObj.AddByPoint(4, nodos_area, prop)
+        area_name = area_data[1]
+        areas_nuevas_nombres.append(area_name)
+
+        ret  = SapModel.AreaObj.SetLocalAxesAdvanced(
+            area_name, True, area_plane, 1, "GLOBAL", PlDir_area, PlPt_area, PlVect_area
+        )
+        code = ret[-1] if isinstance(ret, (list, tuple)) else ret
+        if code != 0:
+            print(f"  Warning ejes area nueva {area_name}, code={code}")
+
+        for stiffness, nonlinear_type, direction, replace in spring_defs:
+            SapModel.AreaObj.SetSpring(
+                area_name, 1, stiffness, nonlinear_type,
+                "", -2, 1, direction, True, Vec, 0.0, replace, "Local"
+            )
+
+    print(f"Areas nuevas creadas: {len(areas_nuevas)}")
+
+    # Eliminar links
+    links_eliminados = 0
+    for tipo, modulos_links in links_modulos.items():
+        for m, lista_links in enumerate(modulos_links):
+            if m not in [idx_parcial_inf, idx_completos[0] - 1] + \
+                    list(range(idx_completos[0], idx_completos[-1] + 1)) + \
+                    [idx_parcial_sup - 1]:
+                continue
+
+            for link in lista_links:
+                link = str(link)
+                pt1, pt2, ret = SapModel.LinkObj.GetPoints(link)
+                x1, y1, z1, _ = SapModel.PointObj.GetCoordCartesian(pt1)
+                x2, y2, z2, _ = SapModel.PointObj.GetCoordCartesian(pt2)
+
+                x_c = (x1 + x2) / 2
+                y_c = (y1 + y2) / 2
+                z_c = (z1 + z2) / 2
+
+                trans_c = x_c if eje_long == "Y" else y_c
+                if not lado(trans_c):
+                    continue
+                if not (Z_min_opening <= z_c <= Z_max_opening):
+                    continue
+
+                long_c = y_c if eje_long == "Y" else x_c
+                if m == idx_parcial_inf - 1:
+                    if long_c < Y_corte_inf:
+                        continue
+                elif m == idx_parcial_sup - 1:
+                    if long_c > Y_corte_sup:
+                        continue
+
+                SapModel.LinkObj.Delete(link)
+                links_eliminados += 1
+
+    print(f"Links eliminados: {links_eliminados}")
+
+    # Eliminar nodos huerfanos
+    nodos_eliminados = 0
+    for nodo in nodos_candidatos:
+        ret  = SapModel.PointObj.DeleteSpecialPoint(nodo)
+        code = ret[-1] if isinstance(ret, (list, tuple)) else ret
+        if code == 0:
+            nodos_eliminados += 1
+    print(f"Nodos huerfanos eliminados: {nodos_eliminados}")
+
+    # Guardar Y_corte_inf y Y_corte_sup para exportar_parametros_cp
+    datos["Y_corte_inf"] = Y_corte_inf
+    datos["Y_corte_sup"] = Y_corte_sup
+    datos["lado"]        = lado
+
+    return areas_nuevas_nombres
