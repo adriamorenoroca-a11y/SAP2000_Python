@@ -116,7 +116,7 @@ def aplicar_cargas(SapModel, datos, areas_modulos, areas_nuevas_nombres, ejes):
             aplicar_a_area(area_data[1])
 
     # Areas nuevas de la abertura
-    if opening=="Yes:":
+    if opening == "Yes":
         for area_name in areas_nuevas_nombres:
             aplicar_a_area(area_name)
         print("Cargas aplicadas a areas nuevas de la abertura")
