@@ -35,4 +35,4 @@ def generar_modelo(ruta_excel):
     areas_nuevas_nombres = crear_abertura(SapModel, datos, modulos, areas_modulos, links_modulos, ejes)
 
 if __name__ == "__main__":
-    generar_modelo(r"C:\Users\adria.moreno\OneDrive - Global Infrastructure\Python - SAP2000\Coordenadas_Nodos.xlsx")
+    generar_modelo(r"C:\Users\adrim\OneDrive\Escritorio\SAP2000_Python\Coordenadas_Nodos.xlsx")
