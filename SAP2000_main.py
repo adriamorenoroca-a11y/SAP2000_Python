@@ -34,5 +34,8 @@ def generar_modelo(ruta_excel):
     # ── 7. Abertura ───────────────────────────────────────────────────
     areas_nuevas_nombres = crear_abertura(SapModel, datos, modulos, areas_modulos, links_modulos, ejes)
 
+    # ── 8. Aplicar cargas ───────────────────────────────────────────────────
+    aplicar_cargas(SapModel, datos, areas_modulos, areas_nuevas_nombres, ejes)
+
 if __name__ == "__main__":
     generar_modelo(r"C:\Users\adrim\OneDrive\Escritorio\SAP2000_Python\Coordenadas_Nodos.xlsx")
