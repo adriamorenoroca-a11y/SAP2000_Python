@@ -52,6 +52,8 @@ def crear_links(SapModel, datos, modulos, links_modulos, ejes):
                     continue
 
                 link_name, ret = SapModel.LinkObj.AddByPoint(nodo_inf, nodo_sup, "", False)
+                SapModel.LinkObj.SetProperty(link_name, nombre)
+                links_modulo[nombre].append(link_name)
                 ret2 = SapModel.LinkObj.SetLocalAxesAdvanced(
                     link_name, True, 1, "GLOBAL", AxDir_lk, AxPt_lk, AxVect_lk,
                     link_plane, 1, "GLOBAL", PlDir_lk, PlPt_lk, PlVect_lk
