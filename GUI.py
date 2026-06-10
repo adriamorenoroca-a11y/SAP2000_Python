@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from tkinter import filedialog
 import tkinter as tk
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
 
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")
@@ -341,16 +343,12 @@ class App(ctk.CTk):
         self.lbl_pct.pack(padx=18, anchor="e")
 
         separador(f)
-        titulo_seccion(f, "Log de generación", pady=(12, 8))
+        titulo_seccion(f, "Generación", pady=(12, 8))
 
         self.frame_log = ctk.CTkFrame(f, fg_color=GRIS, corner_radius=8)
         self.frame_log.pack(padx=18, pady=(0, 16), fill="x")
 
-        self.lbl_log_vacio = ctk.CTkLabel(
-            self.frame_log,
-            text="El log aparecerá aquí durante la generación.",
-            text_color=TEXTO_GRIS, font=("Helvetica", 10))
-        self.lbl_log_vacio.pack(pady=16)
+
 
     # ── Seleccionar archivo ───────────────────────────────────────────
     def seleccionar_archivo(self):
@@ -401,29 +399,43 @@ class App(ctk.CTk):
                 "eje_long": df.iloc[28, 3],  # D29
             }
 
-            aber_vals = {
-                "opening": df.iloc[36, 3],  # D37
-                "method": df.iloc[39, 3],  # D40
-                "altura_opening": "—",
-                "modulos_cortados": df.iloc[44, 3],  # D45
-            }
-
-            try:
-                zmax = float(df.iloc[41, 3])  # D42
-                zmin = float(df.iloc[42, 3])  # D43
-                aber_vals["altura_opening"] = round(abs(zmax) + abs(zmin), 3)
-            except Exception:
-                pass
-
             for key, val in vals.items():
                 if key in self.entries["geo"]:
                     self._set_entry(self.entries["geo"][key],
                                     round(val, 4) if isinstance(val, float) else val)
 
+            # ── Abertura ──────────────────────────────────────────────────
+            try:
+                opening = str(df.iloc[36, 3]).strip()  # D37
+                aber_vals = {"opening": opening}
+
+                if opening == "Yes":
+                    aber_vals["method"] = df.iloc[39, 3]  # D40
+                    aber_vals["modulos_cortados"] = df.iloc[44, 3]  # D45
+                    try:
+                        zmax = float(df.iloc[41, 3])  # D42
+                        zmin = float(df.iloc[42, 3])  # D43
+                        aber_vals["altura_opening"] = round(abs(zmax) + abs(zmin), 3)
+                    except Exception:
+                        aber_vals["altura_opening"] = "—"
+                else:
+                    aber_vals["method"] = "—"
+                    aber_vals["altura_opening"] = "—"
+                    aber_vals["modulos_cortados"] = "—"
+
+            except Exception:
+                aber_vals = {
+                    "opening": "—",
+                    "method": "—",
+                    "altura_opening": "—",
+                    "modulos_cortados": "—"
+                }
+
             for key, val in aber_vals.items():
                 if key in self.entries["aber"]:
                     self._set_entry(self.entries["aber"][key],
                                     round(val, 4) if isinstance(val, float) else val)
+
         except Exception as e:
             print(f"Error geometría: {e}")
 
@@ -505,30 +517,94 @@ class App(ctk.CTk):
 
     def _cargar_links(self, xls):
         try:
-            df = pd.read_excel(xls, sheet_name="Links", header=0)
+            df = pd.read_excel(xls, sheet_name="Links", header=None)
+
             for widget in self.frame_links_cont.winfo_children():
                 widget.destroy()
 
-            for _, row in df.iterrows():
+            for i in range(4, 20):  # filas 5 en adelante
                 try:
-                    nombre = str(row.get("Name:", "")).strip()
-                    tipo   = str(row.get("Type:", "")).strip()
-                    if nombre in ("nan", ""):
-                        continue
+                    tipo = str(df.iloc[i, 1]).strip()  # B
+                    nombre = str(df.iloc[i, 2]).strip()  # C
+                    if nombre in ("nan", "") or tipo in ("nan", ""):
+                        break
+
+                    # DOF activos (D-I, índice 3-8)
+                    dof_labels = ["U1", "U2", "U3", "R1", "R2", "R3"]
+                    dofs = []
+                    for j, lbl in enumerate(dof_labels):
+                        try:
+                            if int(df.iloc[i, 3 + j]) == 1:
+                                dofs.append(lbl)
+                        except Exception:
+                            pass
+
+                    # Fixed (J-O, índice 9-14)
+                    fixeds = []
+                    for j, lbl in enumerate(dof_labels):
+                        try:
+                            if int(df.iloc[i, 9 + j]) == 1:
+                                fixeds.append(lbl)
+                        except Exception:
+                            pass
+
+                    # NonLinear (N-S, índice 13-18)
+                    nls = []
+                    for j, lbl in enumerate(dof_labels):
+                        try:
+                            if int(df.iloc[i, 13 + j]) == 1:
+                                nls.append(lbl)
+                        except Exception:
+                            pass
+
+                    # Rigideces Ke (V-AA, índice 21-26)
+                    ke_labels = ["Ke_U1", "Ke_U2", "Ke_U3", "Ke_R1", "Ke_R2", "Ke_R3"]
+                    kes = []
+                    for j, lbl in enumerate(ke_labels):
+                        try:
+                            val = float(df.iloc[i, 21 + j])
+                            if val != 0:
+                                kes.append(f"{lbl}={val}")
+                        except Exception:
+                            pass
+
+                    # ── Card ──────────────────────────────────────────────
                     card = ctk.CTkFrame(self.frame_links_cont,
-                                        fg_color=AZUL_LIGHT,
-                                        corner_radius=8)
+                                        fg_color=AZUL_LIGHT, corner_radius=8)
                     card.pack(fill="x", pady=4)
+
                     ctk.CTkLabel(card, text=nombre,
                                  font=("Helvetica", 12, "bold"),
-                                 text_color=AZUL).pack(
-                                     padx=12, pady=(8, 2), anchor="w")
-                    ctk.CTkLabel(card, text=f"Tipo: {tipo}",
+                                 text_color=AZUL).pack(padx=12, pady=(8, 2), anchor="w")
+
+                    ctk.CTkLabel(card,
+                                 text=f"Tipo: {tipo}  |  DOF: {', '.join(dofs) if dofs else '—'}",
                                  font=("Helvetica", 10),
-                                 text_color=TEXTO_GRIS).pack(
-                                     padx=12, pady=(0, 8), anchor="w")
+                                 text_color=TEXTO_GRIS).pack(padx=12, pady=(0, 4), anchor="w")
+
+                    if fixeds:
+                        ctk.CTkLabel(card,
+                                     text=f"Fixed: {', '.join(fixeds)}",
+                                     font=("Helvetica", 10),
+                                     text_color=TEXTO_GRIS).pack(padx=12, pady=(0, 4), anchor="w")
+
+                    if nls:
+                        ctk.CTkLabel(card,
+                                     text=f"NonLinear: {', '.join(nls)}",
+                                     font=("Helvetica", 10),
+                                     text_color=TEXTO_GRIS).pack(padx=12, pady=(0, 4), anchor="w")
+
+                    if kes:
+                        ctk.CTkLabel(card,
+                                     text=f"Rigidez: {' | '.join(kes)} kN/m",
+                                     font=("Helvetica", 10),
+                                     text_color=TEXTO_GRIS).pack(padx=12, pady=(0, 8), anchor="w")
+                    else:
+                        ctk.CTkLabel(card, text="").pack(pady=2)
+
                 except Exception:
                     continue
+
         except Exception as e:
             print(f"Error links: {e}")
 
@@ -597,39 +673,66 @@ class App(ctk.CTk):
         try:
             df = pd.read_excel(xls, sheet_name="Nodes", header=None)
 
-            # Leer nodos del anillo base
-            nodos = []
-            for i in range(200):
+            # AO = col 40, AQ = col 42, AU = col 46, AW = col 48
+            nodos_x = []
+            nodos_z = []
+            conect_x = []
+            conect_z = []
+
+            for i in range(4, 300):  # fila 5 en adelante
                 try:
-                    x = float(df.iloc[i, 1])
-                    y = float(df.iloc[i, 2])
-                    if pd.isna(x) or pd.isna(y):
+                    x = df.iloc[i, 40]
+                    z = df.iloc[i, 42]
+                    if pd.isna(x) or pd.isna(z):
                         break
-                    nodos.append((x, y))
+                    nodos_x.append(float(x))
+                    nodos_z.append(float(z))
                 except Exception:
                     break
 
-            if len(nodos) < 3:
+            for i in range(4, 300):
+                try:
+                    x = df.iloc[i, 46]
+                    z = df.iloc[i, 48]
+                    if pd.isna(x) or pd.isna(z):
+                        break
+                    conect_x.append(float(x))
+                    conect_z.append(float(z))
+                except Exception:
+                    break
+
+            if len(nodos_x) < 3:
                 return
 
             # Limpiar frame
             for w in self.frame_grafico.winfo_children():
                 w.destroy()
 
-            xs = [n[0] for n in nodos] + [nodos[0][0]]
-            ys = [n[1] for n in nodos] + [nodos[0][1]]
+            # Cerrar el anillo
+            xs = nodos_x + [nodos_x[0]]
+            zs = nodos_z + [nodos_z[0]]
 
-            fig, ax = plt.subplots(figsize=(6, 3.2),
-                                   facecolor=GRIS)
+            fig, ax = plt.subplots(figsize=(6, 3.2), facecolor=GRIS)
             ax.set_facecolor(GRIS)
-            ax.plot(xs, ys, color=AZUL_MED, linewidth=1.5)
-            ax.scatter([n[0] for n in nodos],
-                       [n[1] for n in nodos],
-                       color=AZUL, s=18, zorder=5)
+
+            # Línea del anillo
+            ax.plot(xs, zs, color=AZUL_MED, linewidth=1.5, zorder=1)
+
+            # Conectores (fondo, bolita grande)
+            if conect_x:
+                ax.scatter(conect_x, conect_z, color="#E67E22",
+                           s=20, zorder=2, label="Conector")
+
+            # Nodos anillo (delante, bolita pequeña)
+            ax.scatter(nodos_x, nodos_z, color=AZUL,
+                       s=5, zorder=3, label="Nodo")
+
             ax.set_aspect("equal")
             ax.axis("off")
             ax.set_title("Anillo base", fontsize=10,
                          color=TEXTO_GRIS, pad=6)
+            ax.legend(loc="lower right", bbox_to_anchor=(1.25, 0),
+                      fontsize=8, framealpha=0.7, edgecolor=GRIS_MED)
             fig.tight_layout(pad=0.5)
 
             canvas = FigureCanvasTkAgg(fig, master=self.frame_grafico)
